@@ -1,0 +1,1109 @@
+import { ScrollView } from "std-widgets.slint";
+
+export struct UiRoom {
+    name: string,
+    mode: string,
+    members: string,
+    latency: string,
+    active: bool,
+}
+
+export struct UiMember {
+    name: string,
+    initials: string,
+    ip: string,
+    latency: string,
+    online: bool,
+}
+
+export struct UiLogEntry {
+    time: string,
+    level: string,
+    message: string,
+}
+
+component NavItem inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> active;
+    callback clicked();
+
+    height: 38px;
+    border-radius: 8px;
+    background: root.active ? #182231 : nav-touch.has-hover ? #121a26 : #00000000;
+    animate background { duration: 130ms; easing: ease-out; }
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        alignment: start;
+
+        Rectangle {
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            background: root.active ? #3f6ff3 : #18202d;
+            animate background { duration: 130ms; easing: ease-out; }
+
+            Text {
+                text: root.icon;
+                color: root.active ? #ffffff : #a6b0bf;
+                font-size: 12px;
+                font-weight: 700;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                animate color { duration: 130ms; easing: ease-out; }
+            }
+        }
+
+        Text {
+            text: root.label;
+            color: root.active ? #f3f6fb : #8c97a7;
+            font-size: 13px;
+            font-weight: root.active ? 700 : 500;
+            vertical-alignment: center;
+            animate color { duration: 130ms; easing: ease-out; }
+        }
+    }
+
+    nav-touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+component PrimaryButton inherits Rectangle {
+    in property <string> label;
+    in property <bool> secondary;
+    callback clicked();
+
+    width: 128px;
+    height: 38px;
+    border-radius: 8px;
+    background: root.secondary ? (button-touch.has-hover ? #222b38 : #1a222e) : (button-touch.has-hover ? #4d78f6 : #3f6ff3);
+    animate background { duration: 120ms; easing: ease-out; }
+
+    Text {
+        y: button-touch.pressed ? 1px : 0px;
+        text: root.label;
+        color: root.secondary ? #d7deea : white;
+        font-size: 13px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        animate y { duration: 80ms; easing: ease-out; }
+    }
+
+    button-touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+component StatusDot inherits Rectangle {
+    in property <bool> connected;
+
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background: root.connected ? #3f6ff3 : #596476;
+    animate background { duration: 180ms; easing: ease-out; }
+}
+
+component StatusBadge inherits Rectangle {
+    in property <bool> connected;
+    in property <string> label;
+
+    width: 88px;
+    height: 26px;
+    border-radius: 13px;
+    background: root.connected ? #1d2b49 : #1a202b;
+    animate background { duration: 180ms; easing: ease-out; }
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 7px;
+        alignment: start;
+
+        StatusDot {
+            connected: root.connected;
+        }
+
+        Text {
+            text: root.label;
+            color: root.connected ? #c9d8ff : #a8b1c0;
+            font-size: 12px;
+            font-weight: 700;
+            vertical-alignment: center;
+            animate color { duration: 180ms; easing: ease-out; }
+        }
+    }
+}
+
+component SectionTitle inherits Rectangle {
+    in property <string> title;
+    in property <string> subtitle;
+
+    height: 38px;
+
+    VerticalLayout {
+        spacing: 3px;
+
+        Text {
+            text: root.title;
+            color: #e6ebf3;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        Text {
+            text: root.subtitle;
+            color: #778295;
+            font-size: 12px;
+        }
+    }
+}
+
+component InfoCell inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+
+    height: 48px;
+    background: transparent;
+
+    VerticalLayout {
+        spacing: 6px;
+
+        Text {
+            text: root.label;
+            color: #768295;
+            font-size: 12px;
+        }
+
+        Text {
+            text: root.value;
+            color: #dce3ee;
+            font-size: 15px;
+            font-weight: 700;
+        }
+    }
+}
+
+component MetricCell inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+    in property <bool> highlight;
+
+    height: 56px;
+    background: transparent;
+
+    VerticalLayout {
+        spacing: 7px;
+
+        Text {
+            text: root.label;
+            color: #768295;
+            font-size: 12px;
+        }
+
+        Text {
+            text: root.value;
+            color: root.highlight ? #8fb0ff : #dce3ee;
+            font-size: 18px;
+            font-weight: 800;
+            animate color { duration: 180ms; easing: ease-out; }
+        }
+    }
+}
+
+component MemberRow inherits Rectangle {
+    in property <UiMember> member;
+
+    height: 46px;
+    border-radius: 8px;
+    background: row-touch.has-hover ? #151d29 : #00000000;
+    animate background { duration: 120ms; easing: ease-out; }
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 10px;
+        alignment: start;
+
+        Rectangle {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: root.member.online ? #202b3d : #1a202a;
+
+            Text {
+                text: root.member.initials;
+                color: #c7d2e2;
+                font-size: 11px;
+                font-weight: 800;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        VerticalLayout {
+            spacing: 2px;
+
+            Text {
+                text: root.member.name;
+                color: #e1e7f0;
+                font-size: 13px;
+                font-weight: 650;
+            }
+
+            Text {
+                text: root.member.ip;
+                color: #758195;
+                font-size: 12px;
+            }
+        }
+
+        Rectangle {
+            horizontal-stretch: 1;
+        }
+
+        Text {
+            width: 60px;
+            text: root.member.latency;
+            color: root.member.online ? #b8c6da : #687386;
+            font-size: 12px;
+            font-weight: 650;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+    }
+
+    row-touch := TouchArea {
+        mouse-cursor: default;
+    }
+}
+
+component LogRow inherits Rectangle {
+    in property <UiLogEntry> entry;
+
+    height: 24px;
+    background: transparent;
+
+    HorizontalLayout {
+        spacing: 14px;
+
+        Text {
+            width: 72px;
+            text: root.entry.time;
+            color: #657083;
+            font-size: 12px;
+            font-family: "Consolas";
+            vertical-alignment: center;
+        }
+
+        Text {
+            width: 54px;
+            text: root.entry.level;
+            color: #8fb0ff;
+            font-size: 12px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: root.entry.message;
+            color: #a9b4c4;
+            font-size: 12px;
+            vertical-alignment: center;
+            horizontal-stretch: 1;
+        }
+    }
+}
+
+component RoomRow inherits Rectangle {
+    in property <UiRoom> room;
+
+    height: 52px;
+    border-radius: 8px;
+    background: root.room.active ? #182231 : row-touch.has-hover ? #151d29 : #00000000;
+    animate background { duration: 120ms; easing: ease-out; }
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 12px;
+        alignment: start;
+
+        Rectangle {
+            width: 6px;
+            height: 26px;
+            border-radius: 3px;
+            background: root.room.active ? #3f6ff3 : #2a3443;
+        }
+
+        VerticalLayout {
+            spacing: 3px;
+
+            Text {
+                text: root.room.name;
+                color: #e4eaf3;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            Text {
+                text: root.room.mode;
+                color: #798499;
+                font-size: 12px;
+            }
+        }
+
+        Rectangle {
+            horizontal-stretch: 1;
+        }
+
+        Text {
+            width: 54px;
+            text: root.room.members;
+            color: #9ca8ba;
+            font-size: 13px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+
+        Text {
+            width: 54px;
+            text: root.room.latency;
+            color: #c6d2e2;
+            font-size: 13px;
+            font-weight: 700;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+    }
+
+    row-touch := TouchArea {
+        mouse-cursor: default;
+    }
+}
+
+component DashboardPage inherits Rectangle {
+    in property <bool> connected;
+    in property <string> status-text;
+    in property <string> virtual-ip;
+    in property <string> current-room;
+    in property <string> node-latency;
+    in property <string> upload-speed;
+    in property <string> download-speed;
+    in property <[UiMember]> members;
+    in property <[UiLogEntry]> logs;
+    callback toggle-connection();
+
+    background: transparent;
+
+    VerticalLayout {
+        padding-left: 32px;
+        padding-right: 32px;
+        padding-top: 28px;
+        padding-bottom: 28px;
+        spacing: 22px;
+
+        Rectangle {
+            height: 44px;
+            horizontal-stretch: 1;
+            background: transparent;
+
+            HorizontalLayout {
+                width: parent.width;
+                height: parent.height;
+                alignment: start;
+
+                VerticalLayout {
+                    spacing: 2px;
+
+                    Text {
+                        text: "首页";
+                        color: #eef3fa;
+                        font-size: 24px;
+                        font-weight: 800;
+                    }
+
+                    Text {
+                        text: "Shione Link 桌面客户端";
+                        color: #7b8798;
+                        font-size: 12px;
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                }
+
+                PrimaryButton {
+                    label: root.connected ? "断开连接" : "连接";
+                    secondary: root.connected;
+                    clicked => {
+                        root.toggle-connection();
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            horizontal-stretch: 1;
+            height: 150px;
+            border-radius: 12px;
+            background: #111821;
+
+            HorizontalLayout {
+                padding: 24px;
+                spacing: 28px;
+                alignment: start;
+
+                VerticalLayout {
+                    width: 390px;
+                    spacing: 18px;
+
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: start;
+
+                        StatusDot {
+                            connected: root.connected;
+                        }
+
+                        Text {
+                            text: root.status-text;
+                            color: #eef3fa;
+                            font-size: 30px;
+                            font-weight: 850;
+                            vertical-alignment: center;
+                        }
+
+                        StatusBadge {
+                            connected: root.connected;
+                            label: root.connected ? "运行中" : "离线";
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 42px;
+
+                        InfoCell {
+                            label: "虚拟 IP";
+                            value: root.virtual-ip;
+                        }
+
+                        InfoCell {
+                            label: "当前房间";
+                            value: root.current-room;
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: 1px;
+                    height: 92px;
+                    background: #202a37;
+                }
+
+                HorizontalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 34px;
+
+                    MetricCell {
+                        label: "延迟";
+                        value: root.node-latency;
+                        highlight: true;
+                    }
+
+                    MetricCell {
+                        label: "上行";
+                        value: root.upload-speed;
+                        highlight: false;
+                    }
+
+                    MetricCell {
+                        label: "下行";
+                        value: root.download-speed;
+                        highlight: false;
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            spacing: 20px;
+            vertical-stretch: 1;
+
+            Rectangle {
+                horizontal-stretch: 1;
+                border-radius: 12px;
+                background: #101720;
+
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 14px;
+
+                    SectionTitle {
+                        title: "在线成员";
+                        subtitle: "当前房间内的虚拟局域网节点";
+                    }
+
+                    ScrollView {
+                        vertical-stretch: 1;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            for member in root.members: MemberRow {
+                                member: member;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                border-radius: 12px;
+                background: #101720;
+                horizontal-stretch: 1;
+
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 14px;
+
+                    SectionTitle {
+                        title: "运行日志";
+                        subtitle: "本地客户端事件";
+                    }
+
+                    ScrollView {
+                        vertical-stretch: 1;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            for entry in root.logs: LogRow {
+                                entry: entry;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component RoomsPage inherits Rectangle {
+    in property <[UiRoom]> rooms;
+    in property <[UiMember]> members;
+
+    background: transparent;
+
+    VerticalLayout {
+        padding-left: 32px;
+        padding-right: 32px;
+        padding-top: 28px;
+        padding-bottom: 28px;
+        spacing: 22px;
+
+        VerticalLayout {
+            height: 44px;
+            spacing: 2px;
+
+            Text {
+                text: "房间";
+                color: #eef3fa;
+                font-size: 24px;
+                font-weight: 800;
+            }
+
+            Text {
+                text: "管理可见联机房间与成员";
+                color: #7b8798;
+                font-size: 12px;
+            }
+        }
+
+        HorizontalLayout {
+            spacing: 20px;
+            vertical-stretch: 1;
+
+            Rectangle {
+                border-radius: 12px;
+                background: #101720;
+                horizontal-stretch: 1;
+
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 14px;
+
+                    SectionTitle {
+                        title: "房间列表";
+                        subtitle: "第一阶段为本地 mock 数据";
+                    }
+
+                    ScrollView {
+                        vertical-stretch: 1;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            for room in root.rooms: RoomRow {
+                                room: room;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                width: 330px;
+                border-radius: 12px;
+                background: #101720;
+
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 14px;
+
+                    SectionTitle {
+                        title: "成员";
+                        subtitle: "当前房间节点";
+                    }
+
+                    ScrollView {
+                        vertical-stretch: 1;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            for member in root.members: MemberRow {
+                                member: member;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component SettingRow inherits Rectangle {
+    in property <string> title;
+    in property <string> subtitle;
+    in property <bool> checked;
+
+    height: 58px;
+    border-radius: 8px;
+    background: row-touch.has-hover ? #151d29 : #00000000;
+    animate background { duration: 120ms; easing: ease-out; }
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 12px;
+        alignment: start;
+
+        VerticalLayout {
+            spacing: 3px;
+
+            Text {
+                text: root.title;
+                color: #e1e7f0;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            Text {
+                text: root.subtitle;
+                color: #768295;
+                font-size: 12px;
+            }
+        }
+
+        Rectangle {
+            horizontal-stretch: 1;
+        }
+
+        Rectangle {
+            width: 38px;
+            height: 22px;
+            border-radius: 11px;
+            background: root.checked ? #3f6ff3 : #252d3a;
+            animate background { duration: 150ms; easing: ease-out; }
+
+            Rectangle {
+                x: root.checked ? 19px : 3px;
+                y: 3px;
+                width: 16px;
+                height: 16px;
+                border-radius: 8px;
+                background: #ffffff;
+                animate x { duration: 150ms; easing: ease-in-out; }
+            }
+        }
+    }
+
+    row-touch := TouchArea {
+        mouse-cursor: pointer;
+    }
+}
+
+component SettingsPage inherits Rectangle {
+    in property <bool> auto-reconnect;
+    in property <bool> minimize-to-tray;
+    in property <bool> launch-on-startup;
+
+    background: transparent;
+
+    VerticalLayout {
+        padding-left: 32px;
+        padding-right: 32px;
+        padding-top: 28px;
+        padding-bottom: 28px;
+        spacing: 22px;
+
+        VerticalLayout {
+            height: 44px;
+            spacing: 2px;
+
+            Text {
+                text: "设置";
+                color: #eef3fa;
+                font-size: 24px;
+                font-weight: 800;
+            }
+
+            Text {
+                text: "客户端行为与本地配置";
+                color: #7b8798;
+                font-size: 12px;
+            }
+        }
+
+        Rectangle {
+            width: 620px;
+            border-radius: 12px;
+            background: #101720;
+
+            VerticalLayout {
+                padding: 18px;
+                spacing: 4px;
+
+                SettingRow {
+                    title: "自动重连";
+                    subtitle: "连接中断后自动恢复当前房间";
+                    checked: root.auto-reconnect;
+                }
+
+                SettingRow {
+                    title: "最小化到托盘";
+                    subtitle: "关闭窗口时保持后台运行";
+                    checked: root.minimize-to-tray;
+                }
+
+                SettingRow {
+                    title: "开机启动";
+                    subtitle: "登录 Windows 后自动启动客户端";
+                    checked: root.launch-on-startup;
+                }
+            }
+        }
+
+        HorizontalLayout {
+            spacing: 12px;
+
+            PrimaryButton {
+                label: "导入配置";
+                secondary: true;
+            }
+
+            PrimaryButton {
+                label: "导出配置";
+                secondary: true;
+            }
+        }
+    }
+}
+
+component AboutPage inherits Rectangle {
+    background: transparent;
+
+    VerticalLayout {
+        padding-left: 32px;
+        padding-right: 32px;
+        padding-top: 28px;
+        padding-bottom: 28px;
+        spacing: 22px;
+
+        VerticalLayout {
+            height: 44px;
+            spacing: 2px;
+
+            Text {
+                text: "关于";
+                color: #eef3fa;
+                font-size: 24px;
+                font-weight: 800;
+            }
+
+            Text {
+                text: "Shione Client 原型";
+                color: #7b8798;
+                font-size: 12px;
+            }
+        }
+
+        Rectangle {
+            width: 620px;
+            height: 190px;
+            border-radius: 12px;
+            background: #101720;
+
+            VerticalLayout {
+                padding: 22px;
+                spacing: 12px;
+
+                Text {
+                    text: "Shione Client";
+                    color: #eef3fa;
+                    font-size: 22px;
+                    font-weight: 800;
+                }
+
+                Text {
+                    text: "Rust + Slint desktop prototype";
+                    color: #8b96a8;
+                    font-size: 13px;
+                }
+
+                Text {
+                    text: "当前阶段只包含本地 mock 界面。网络核心、虚拟网卡、NAT 打洞与中继 fallback 将在后续模块接入。";
+                    color: #a5afbf;
+                    font-size: 13px;
+                    wrap: word-wrap;
+                }
+            }
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "Shione Client";
+    preferred-width: 1120px;
+    preferred-height: 720px;
+    min-width: 980px;
+    min-height: 620px;
+    background: #0b1017;
+
+    in property <bool> connected;
+    in property <int> current-page;
+    in property <string> status-text;
+    in property <string> virtual-ip;
+    in property <string> current-room;
+    in property <string> node-latency;
+    in property <string> upload-speed;
+    in property <string> download-speed;
+    in property <string> relay-mode;
+    in property <string> nat-type;
+    in property <bool> auto-reconnect;
+    in property <bool> minimize-to-tray;
+    in property <bool> launch-on-startup;
+    in property <[UiRoom]> rooms;
+    in property <[UiMember]> members;
+    in property <[UiLogEntry]> logs;
+
+    callback toggle-connection();
+    callback navigate(int);
+
+    HorizontalLayout {
+        spacing: 0px;
+
+        Rectangle {
+            width: 184px;
+            background: #0c1119;
+
+            VerticalLayout {
+                padding-left: 18px;
+                padding-right: 18px;
+                padding-top: 24px;
+                padding-bottom: 18px;
+                spacing: 24px;
+
+                HorizontalLayout {
+                    height: 40px;
+                    spacing: 10px;
+                    alignment: start;
+
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 9px;
+                        background: #3f6ff3;
+
+                        Text {
+                            text: "S";
+                            color: white;
+                            font-size: 18px;
+                            font-weight: 850;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    VerticalLayout {
+                        spacing: 1px;
+
+                        Text {
+                            text: "Shione";
+                            color: #eef3fa;
+                            font-size: 17px;
+                            font-weight: 800;
+                        }
+
+                        Text {
+                            text: "LAN Client";
+                            color: #7a8494;
+                            font-size: 11px;
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 6px;
+
+                    NavItem {
+                        icon: "D";
+                        label: "首页";
+                        active: root.current-page == 0;
+                        clicked => {
+                            root.navigate(0);
+                        }
+                    }
+
+                    NavItem {
+                        icon: "R";
+                        label: "房间";
+                        active: root.current-page == 1;
+                        clicked => {
+                            root.navigate(1);
+                        }
+                    }
+
+                    NavItem {
+                        icon: "S";
+                        label: "设置";
+                        active: root.current-page == 2;
+                        clicked => {
+                            root.navigate(2);
+                        }
+                    }
+
+                    NavItem {
+                        icon: "i";
+                        label: "关于";
+                        active: root.current-page == 3;
+                        clicked => {
+                            root.navigate(3);
+                        }
+                    }
+                }
+
+                Rectangle {
+                    vertical-stretch: 1;
+                }
+
+                Rectangle {
+                    height: 72px;
+                    border-radius: 10px;
+                    background: #111821;
+
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 6px;
+
+                        Text {
+                            text: "线路";
+                            color: #778295;
+                            font-size: 11px;
+                            font-weight: 700;
+                        }
+
+                        Text {
+                            text: root.relay-mode;
+                            color: #dce3ee;
+                            font-size: 13px;
+                            font-weight: 700;
+                        }
+
+                        Text {
+                            text: root.connected ? "mock 会话运行中" : "等待连接";
+                            color: #7e899a;
+                            font-size: 11px;
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            width: 1px;
+            background: #171f2b;
+        }
+
+        Rectangle {
+            background: #0b1017;
+            horizontal-stretch: 1;
+
+            VerticalLayout {
+                padding: 0px;
+                spacing: 0px;
+
+                if root.current-page == 0 : DashboardPage {
+                    horizontal-stretch: 1;
+                    vertical-stretch: 1;
+                    connected: root.connected;
+                    status-text: root.status-text;
+                    virtual-ip: root.virtual-ip;
+                    current-room: root.current-room;
+                    node-latency: root.node-latency;
+                    upload-speed: root.upload-speed;
+                    download-speed: root.download-speed;
+                    members: root.members;
+                    logs: root.logs;
+                    toggle-connection => {
+                        root.toggle-connection();
+                    }
+                }
+
+                if root.current-page == 1 : RoomsPage {
+                    horizontal-stretch: 1;
+                    vertical-stretch: 1;
+                    rooms: root.rooms;
+                    members: root.members;
+                }
+
+                if root.current-page == 2 : SettingsPage {
+                    horizontal-stretch: 1;
+                    vertical-stretch: 1;
+                    auto-reconnect: root.auto-reconnect;
+                    minimize-to-tray: root.minimize-to-tray;
+                    launch-on-startup: root.launch-on-startup;
+                }
+
+                if root.current-page == 3 : AboutPage {
+                    horizontal-stretch: 1;
+                    vertical-stretch: 1;
+                }
+            }
+        }
+    }
+}
